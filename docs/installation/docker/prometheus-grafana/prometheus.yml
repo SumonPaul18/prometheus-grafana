@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s  # How frequently to scrape targets
+  evaluation_interval: 15s  # How frequently to evaluate rules
+
+scrape_configs:
+  - job_name: 'docker_swarm'
+    static_configs:
+      - targets:
+        - 10.1.149.59:9100  # Node Exporter running on Swarm node 1
+        - 10.1.149.60:9100  # Node Exporter running on Swarm node 2
+        - 10.1.149.61:9100  # Node Exporter running on Swarm node 3
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets:
+        - 10.1.149.59:8080  # cAdvisor running on Swarm node 1
+        - 10.1.149.60:8080  # cAdvisor running on Swarm node 2
+        - 10.1.149.61:8080  # cAdvisor running on Swarm node 3
