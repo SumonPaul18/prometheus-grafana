@@ -1,9 +1,4 @@
-# 📄 Guide 1: Local Storage Setup (Bind Mounts)
-**File:** `docker-compose.yml`  
-**Strategy:** Data is stored directly in folders within your current working directory. Best for easy backup visibility and simple setups.
-
-```markdown
-# Prometheus & Grafana Monitoring Stack (Local Storage)
+# Prometheus & Grafana Monitoring Stack (Local Storage/Bind Mounts)
 
 This guide sets up a production-ready monitoring stack using **Bind Mounts**. All persistent data (Grafana dashboards, Prometheus metrics) will be stored in folders inside your current project directory.
 
@@ -69,11 +64,12 @@ Since we are using **Bind Mounts** (`./grafana-data`) and running containers as 
 
 Run these commands in your terminal:
 
+#### 1. Create directories 
 ```bash
-# 1. Create directories
 mkdir -p grafana-data prometheus-data
-
-# 2. Set ownership to UID 1001 (Grafana/Prometheus internal user)
+```
+#### 2. Set ownership to UID 1001 (Grafana/Prometheus internal user)
+```
 sudo chown -R 1001:1001 grafana-data prometheus-data
 ```
 
@@ -130,6 +126,55 @@ tar -czvf monitoring-backup-$(date +%F).tar.gz ./grafana-data ./prometheus-data
 
 - **Container exits immediately?** Check permissions. Run `ls -ld grafana-data`. It should be owned by `1001`. If not, run `sudo chown -R 1001:1001 grafana-data`.
 - **Port already in use?** Ensure ports 3000, 9090, 8080, and 9100 are free. Use `sudo ss -tlnp | grep <port>` to check.
-```
+
+### 🔄 Updating Prometheus Configuration
+
+When you modify `prometheus.yml` (e.g., adding new targets or changing scrape intervals), you need to apply these changes to the running container. The method depends on whether the `--web.enable-lifecycle` flag is enabled in your `docker-compose.yml`.
+
+### Scenario A: If `--web.enable-lifecycle` is Enabled (Recommended)
+*Your current `docker-compose.yml` already includes this flag.*
+
+This allows you to reload the configuration **without restarting** the Prometheus container, ensuring zero downtime for data collection.
+
+1. **Edit the prometheus.yml file:**
+   ```bash
+   nano prometheus.yml
+   ```
+   > Make your changes and save
+
+2. **Trigger a Hot Reload:**
+   Send a `POST` request to the Prometheus API using `curl`:
+   ```bash
+   curl -X POST http://localhost:9090/-/reload
+   ```
+
+3. **Verify:**
+   Check the Prometheus logs to confirm successful reload:
+   ```bash
+   docker logs prometheus
+   ```
+
+### Scenario B: If `--web.enable-lifecycle` is NOT Enabled
+If you remove the flag or use a basic setup, you must restart the container to apply changes. This causes a brief interruption in scraping.
+
+1. **Edit the prometheus.yml file:**
+   ```bash
+   nano prometheus.yml
+   ```
+   > Make your changes and save
+
+2. **Restart the Service:**
+   ```bash
+   docker compose restart prometheus
+   ```
+
+### ⚡ Quick Comparison
+
+| Method | Command | Downtime | Requirement |
+| :--- | :--- | :--- | :--- |
+| **Hot Reload** | `curl -X POST http://localhost:9090/-/reload` | None (Zero) | `--web.enable-lifecycle` flag must be set |
+| **Restart** | `docker compose restart prometheus` | Brief (Seconds) | No special flags needed |
+
+> **💡 Pro Tip:** Always prefer **Hot Reload** in production environments to maintain continuous monitoring data integrity.
 
 ---
