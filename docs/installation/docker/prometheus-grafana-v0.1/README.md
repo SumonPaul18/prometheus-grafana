@@ -1,9 +1,3 @@
-
-# 📄 Guide 2: Managed Volume Setup (Named Volumes)
-**File:** `docker-compose1.yml`  
-**Strategy:** Data is managed by Docker in `/var/lib/docker/volumes`. Best for stability, security, and avoiding permission issues.
-
-```markdown
 # Prometheus & Grafana Monitoring Stack (Named Volumes)
 
 This guide sets up a robust monitoring stack using **Docker Named Volumes**. Docker manages the storage location internally. This method avoids manual permission errors and is recommended for long-term production use.
@@ -142,11 +136,11 @@ When you modify `prometheus.yml` (e.g., adding new targets or changing scrape in
 
 This allows you to reload the configuration **without restarting** the Prometheus container, ensuring zero downtime for data collection.
 
-1. **Edit the file:**
+1. **Edit the prometheus.yml file:**
    ```bash
    nano prometheus.yml
-   # Make your changes and save
    ```
+   > Make your changes and save
 
 2. **Trigger a Hot Reload:**
    Send a `POST` request to the Prometheus API using `curl`:
